@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/odanaraujo/user-api/configurations/loggers"
+	"github.com/odanaraujo/user-api/infrastructure/loggers"
 	"github.com/odanaraujo/user-api/router"
 )
 

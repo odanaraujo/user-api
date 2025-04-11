@@ -4,7 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/odanaraujo/user-api/configurations/exception"
+
+	"github.com/odanaraujo/user-api/infrastructure/exception"
 	"github.com/odanaraujo/user-api/internal/model"
 	"github.com/odanaraujo/user-api/internal/user"
 )
