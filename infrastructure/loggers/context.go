@@ -3,20 +3,31 @@ package loggers
 import (
 	"context"
 
-	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
 
-const correlationKey = "correlation_id"
+type contextKey string
+
+const (
+	correlationKey = "correlation_id"
+	loggerKey      = contextKey("logger")
+)
+
+func WithLogger(ctx context.Context, logger *zap.Logger) context.Context {
+	return context.WithValue(ctx, loggerKey, logger)
+}
 
 // FromContext extrai o correlation_id e retorna um logger com ele embutido
-func FromContext(c *gin.Context) *zap.Logger {
-	cid := c.GetString(correlationKey)
-	if cid == "" {
+func FromContext(ctx context.Context) *zap.Logger {
+	if ctx == nil {
 		return log
 	}
 
-	return log.With(zap.String(correlationKey, cid))
+	if l, ok := ctx.Value(loggerKey).(*zap.Logger); ok && l != nil {
+		return l
+	}
+
+	return log
 }
 
 // Para uso com context.Context tradicional (caso use fora do Gin)

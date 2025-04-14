@@ -19,8 +19,9 @@ func NewUserHandler(service user.Service) *UserHandler {
 }
 
 func (u *UserHandler) GetUserByID(c *gin.Context) {
+	ctx := c.Request.Context()
 	id := c.Param("id")
-	user, err := u.Service.GetUserByID(id)
+	user, err := u.Service.GetUserByID(ctx, id)
 	if err != nil {
 		c.JSON(err.Code, err)
 		return
@@ -30,6 +31,7 @@ func (u *UserHandler) GetUserByID(c *gin.Context) {
 }
 
 func (u *UserHandler) CreateUser(c *gin.Context) {
+	ctx := c.Request.Context()
 	var user model.User
 	if err := c.ShouldBindBodyWithJSON(&user); err != nil {
 		ex := exception.BadRequestException("invalid request payload")
@@ -37,7 +39,7 @@ func (u *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	createUser, err := u.Service.CreateUser(&user)
+	createUser, err := u.Service.CreateUser(ctx, &user)
 	if err != nil {
 		c.JSON(err.Code, err)
 		return
@@ -47,6 +49,7 @@ func (u *UserHandler) CreateUser(c *gin.Context) {
 }
 
 func (u *UserHandler) UpdateUser(c *gin.Context) {
+	ctx := c.Request.Context()
 	var user model.User
 	if err := c.ShouldBindBodyWithJSON(&user); err != nil {
 		ex := exception.BadRequestException("invalid request payload")
@@ -54,7 +57,7 @@ func (u *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if ex := u.Service.UpdateUser(&user); ex != nil {
+	if ex := u.Service.UpdateUser(ctx, &user); ex != nil {
 		c.JSON(ex.Code, ex)
 		return
 	}
@@ -63,8 +66,9 @@ func (u *UserHandler) UpdateUser(c *gin.Context) {
 }
 
 func (u *UserHandler) DeleteUser(c *gin.Context) {
+	ctx := c.Request.Context()
 	id := c.Param("id")
-	if err := u.Service.DeleteUser(id); err != nil {
+	if err := u.Service.DeleteUser(ctx, id); err != nil {
 		c.JSON(err.Code, err)
 		return
 	}

@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"sync"
 	"time"
 )
@@ -49,7 +50,7 @@ func (c *MemoryCache) cleanup() {
 	}
 }
 
-func (cache *MemoryCache) Set(key string, value []byte, ttl time.Duration) {
+func (cache *MemoryCache) Set(ctx context.Context, key string, value []byte, ttl time.Duration) {
 	cache.Mutex.Lock()
 	defer cache.Mutex.Unlock()
 
@@ -61,7 +62,7 @@ func (cache *MemoryCache) Set(key string, value []byte, ttl time.Duration) {
 	cache.Expiration[key] = time.Now().Add(ttl)
 }
 
-func (cache *MemoryCache) Get(key string) ([]byte, bool) {
+func (cache *MemoryCache) Get(ctx context.Context, key string) ([]byte, bool) {
 	cache.Mutex.Lock()
 	defer cache.Mutex.Unlock()
 
@@ -76,7 +77,7 @@ func (cache *MemoryCache) Get(key string) ([]byte, bool) {
 	return val, ok
 }
 
-func (cache *MemoryCache) Delete(key string) {
+func (cache *MemoryCache) Delete(ctx context.Context, key string) {
 	cache.Mutex.Lock()
 	defer cache.Mutex.Unlock()
 

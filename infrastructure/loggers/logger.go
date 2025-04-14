@@ -72,6 +72,10 @@ func getLevelLogs() zapcore.Level {
 	}
 }
 
+func GetLogger() *zap.Logger {
+	return log
+}
+
 func Close() {
 	log.Sync()
 }

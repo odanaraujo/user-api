@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -17,16 +18,16 @@ func newMockCache() *mockCache {
 	return &mockCache{store: make(map[string][]byte)}
 }
 
-func (m *mockCache) Get(key string) ([]byte, bool) {
+func (m *mockCache) Get(ctx context.Context, key string) ([]byte, bool) {
 	val, ok := m.store[key]
 	return val, ok
 }
 
-func (m *mockCache) Set(key string, value []byte, ttl time.Duration) {
+func (m *mockCache) Set(ctx context.Context, key string, value []byte, ttl time.Duration) {
 	m.store[key] = value
 }
 
-func (m *mockCache) Delete(key string) {
+func (m *mockCache) Delete(ctx context.Context, key string) {
 	delete(m.store, key)
 }
 
@@ -42,12 +43,12 @@ func TestCreateUser(t *testing.T) {
 		Email: "joao@gmail.com",
 	}
 
-	createdUser, err := service.CreateUser(user)
+	createdUser, err := service.CreateUser(context.Background(), user)
 	assert.Nil(t, err)
 	assert.Equal(t, user, createdUser)
 
 	// verifica se o dado foi realmente salvo no cache
-	data, ok := mock.Get("123")
+	data, ok := mock.Get(context.Background(), "123")
 	assert.True(t, ok)
 
 	var cached model.User
@@ -68,7 +69,7 @@ func TestCreateUserWithEmailError(t *testing.T) {
 		Email: "joao@.com",
 	}
 
-	_, err := service.CreateUser(user)
+	_, err := service.CreateUser(context.Background(), user)
 	assert.NotEmpty(t, err)
 }
 
@@ -85,9 +86,9 @@ func TestGetUserByID(t *testing.T) {
 	}
 
 	data, _ := json.Marshal(user)
-	mock.Set(user.ID, data, time.Hour)
+	mock.Set(context.Background(), user.ID, data, time.Hour)
 
-	got, err := service.GetUserByID(user.ID)
+	got, err := service.GetUserByID(context.Background(), user.ID)
 	assert.Nil(t, err)
 	assert.Equal(t, user.Name, got.Name)
 	assert.Equal(t, user.Email, got.Email)
@@ -99,11 +100,11 @@ func TestDeleteUser(t *testing.T) {
 
 	user := model.User{ID: "999"}
 	data, _ := json.Marshal(user)
-	mock.Set(user.ID, data, time.Hour)
+	mock.Set(context.Background(), user.ID, data, time.Hour)
 
-	err := service.DeleteUser(user.ID)
+	err := service.DeleteUser(context.Background(), user.ID)
 	assert.Nil(t, err)
 
-	_, ok := mock.Get(user.ID)
+	_, ok := mock.Get(context.Background(), user.ID)
 	assert.False(t, ok)
 }

@@ -41,6 +41,5 @@ func ValidateAge(age uint64) bool {
 
 func ValidateEmail(email string) bool {
 	_, err := mail.ParseAddress(email)
-
 	return err != nil
 }
