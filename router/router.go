@@ -11,6 +11,7 @@ func NewRouter() *gin.Engine {
 	r.Use(gin.Recovery())
 	r.Use(middleware.CorrelationIDMiddleware())
 	r.Use(middleware.LoggerMiddleware())
+	r.Use(middleware.RateLimitMiddleware())
 
 	routes.RegisterRoutes(r)
 	return r

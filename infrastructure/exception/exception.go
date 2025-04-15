@@ -80,3 +80,11 @@ func ForbiddenException(message string) *Exception {
 		Code:    http.StatusForbidden,
 	}
 }
+
+func TooManyRequestsException(message string) *Exception {
+	return &Exception{
+		Message: message,
+		Err:     "too_many_requests",
+		Code:    http.StatusTooManyRequests,
+	}
+}
