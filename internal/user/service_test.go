@@ -57,6 +57,23 @@ func TestCreateUser(t *testing.T) {
 	assert.Equal(t, user.Email, cached.Email)
 }
 
+func TestCreateUser_OverWrite(t *testing.T) {
+	mock := newMockCache()
+	service := NewUserService(mock)
+
+	user1 := &model.User{ID: "1", Name: "first", CPF: "12345678910", Age: 30, Email: "1@a.com"}
+	user2 := &model.User{ID: "1", Name: "seconds", CPF: "12345678911", Age: 25, Email: "2@a.com"}
+
+	service.CreateUser(context.Background(), user1)
+	service.CreateUser(context.Background(), user2)
+
+	data, _ := mock.Get(context.Background(), "1")
+	var cached model.User
+	json.Unmarshal(data, &cached)
+
+	assert.Equal(t, "seconds", cached.Name)
+}
+
 func TestCreateUserWithEmailError(t *testing.T) {
 	mock := newMockCache()
 	service := NewUserService(mock)
@@ -94,6 +111,26 @@ func TestGetUserByID(t *testing.T) {
 	assert.Equal(t, user.Email, got.Email)
 }
 
+func TestGetUserByID_NotFound(t *testing.T) {
+	mock := newMockCache()
+	service := NewUserService(mock)
+
+	got, err := service.GetUserByID(context.Background(), "não existe")
+	assert.NotNil(t, err)
+	assert.Nil(t, got)
+}
+
+func TestGetUserByID_InvalidJSON(t *testing.T) {
+	mock := newMockCache()
+	service := NewUserService(mock)
+
+	mock.Set(context.Background(), "abc", []byte("this_not_json"), time.Hour)
+	got, err := service.GetUserByID(context.Background(), "abc")
+	assert.NotNil(t, err)
+	assert.Nil(t, got)
+	assert.Equal(t, "error performing unmarshal", err.Message)
+}
+
 func TestDeleteUser(t *testing.T) {
 	mock := newMockCache()
 	service := NewUserService(mock)
@@ -107,4 +144,24 @@ func TestDeleteUser(t *testing.T) {
 
 	_, ok := mock.Get(context.Background(), user.ID)
 	assert.False(t, ok)
+}
+
+func TestDelete_NotFound(t *testing.T) {
+	mock := newMockCache()
+	service := NewUserService(mock)
+	err := service.DeleteUser(context.Background(), "not found")
+
+	assert.NotNil(t, err)
+	assert.Equal(t, "user not found in cache", err.Message)
+
+}
+
+func TestDelete_IDIsRequired(t *testing.T) {
+	mock := newMockCache()
+	service := NewUserService(mock)
+	err := service.DeleteUser(context.Background(), "")
+
+	assert.NotNil(t, err)
+	assert.Equal(t, "user ID is required", err.Message)
+
 }
