@@ -3,6 +3,11 @@ package model
 import (
 	"errors"
 	"net/mail"
+	"time"
+)
+
+const (
+	CacheTTL = time.Hour * 24
 )
 
 type User struct {
