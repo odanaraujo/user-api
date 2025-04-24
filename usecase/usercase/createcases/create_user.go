@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/google/uuid"
 	"github.com/odanaraujo/user-api/cache"
 	"github.com/odanaraujo/user-api/infrastructure/exception"
 	"github.com/odanaraujo/user-api/infrastructure/loggers"
@@ -20,6 +21,8 @@ func NewCreateUser(cache cache.Cache) *CreateUserUseCase {
 }
 
 func (c *CreateUserUseCase) Execute(ctx context.Context, user *model.User) (*model.User, *exception.Exception) {
+	user.ID = uuid.NewString()
+
 	if err := user.Validate(); err != nil {
 		log := loggers.FromContext(ctx)
 		log.Error("invalid user data", zap.String("user_id", user.ID))
