@@ -31,6 +31,10 @@ func (m *mockCache) Delete(ctx context.Context, key string) {
 	delete(m.store, key)
 }
 
+func (m *mockCache) Increment(ctx context.Context, key string, expiration time.Duration) (int64, error) {
+	return 0, nil
+}
+
 func TestCreateUser(t *testing.T) {
 	mock := newMockCache()
 	service := NewUserService(mock)

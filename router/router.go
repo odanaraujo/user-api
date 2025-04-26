@@ -9,15 +9,16 @@ import (
 )
 
 func NewRouter() *gin.Engine {
-	r := gin.New()
-	r.Use(gin.Recovery())
-	r.Use(middleware.CorrelationIDMiddleware())
-	r.Use(middleware.LoggerMiddleware())
-	r.Use(middleware.RateLimitMiddleware())
 
 	// inject user service
 	redis := cache.NewRedisCache()
 	userService := user.NewUserService(redis)
+
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(middleware.CorrelationIDMiddleware())
+	r.Use(middleware.LoggerMiddleware())
+	r.Use(middleware.RateLimitByIP(redis))
 
 	routes.RegisterRoutes(r, userService)
 	return r

@@ -12,15 +12,15 @@ import (
 )
 
 var (
-	redisInstance *redisCache
+	redisInstance *RedisCache
 	once          sync.Once
 )
 
-type redisCache struct {
+type RedisCache struct {
 	client *redis.Client
 }
 
-func NewRedisCache() *redisCache {
+func NewRedisCache() *RedisCache {
 	once.Do(func() {
 		host := os.Getenv("REDIS_HOST")
 		port := os.Getenv("REDIS_PORT")
@@ -38,13 +38,13 @@ func NewRedisCache() *redisCache {
 			DB:       db,
 		})
 
-		redisInstance = &redisCache{client: client}
+		redisInstance = &RedisCache{client: client}
 	})
 
 	return redisInstance
 }
 
-func (r *redisCache) Get(ctx context.Context, key string) ([]byte, bool) {
+func (r *RedisCache) Get(ctx context.Context, key string) ([]byte, bool) {
 	val, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {
 		return nil, false
@@ -53,7 +53,7 @@ func (r *redisCache) Get(ctx context.Context, key string) ([]byte, bool) {
 	return val, true
 }
 
-func (r *redisCache) Set(ctx context.Context, key string, value []byte, ttl time.Duration) {
+func (r *RedisCache) Set(ctx context.Context, key string, value []byte, ttl time.Duration) {
 	cmd := r.client.Set(ctx, key, value, ttl)
 
 	if cmd.Err() != nil {
@@ -61,6 +61,22 @@ func (r *redisCache) Set(ctx context.Context, key string, value []byte, ttl time
 	}
 }
 
-func (r *redisCache) Delete(ctx context.Context, key string) {
+func (r *RedisCache) Delete(ctx context.Context, key string) {
 	r.client.Del(ctx, key)
+}
+
+func (r *RedisCache) Increment(ctx context.Context, key string, expiration time.Duration) (int64, error) {
+	count, err := r.client.Incr(ctx, key).Result()
+	if err != nil {
+		return 0, err
+	}
+
+	if count == 1 {
+		err := r.client.Expire(ctx, key, expiration).Err()
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return count, nil
 }
