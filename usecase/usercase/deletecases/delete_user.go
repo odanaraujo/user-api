@@ -1,4 +1,4 @@
-package createcases
+package deletecases
 
 import (
 	"context"

@@ -1,10 +1,8 @@
 package middleware
 
 import (
-	"context"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -12,33 +10,7 @@ import (
 	"github.com/odanaraujo/user-api/infrastructure/exception"
 	"github.com/odanaraujo/user-api/infrastructure/loggers"
 	"go.uber.org/zap"
-	"golang.org/x/time/rate"
 )
-
-var (
-	limiter *rate.Limiter
-	mu      sync.Mutex
-)
-
-type RateLimiter struct {
-	cache   cache.Cache
-	limit   int
-	window  time.Duration
-	context context.Context
-}
-
-func NewRateLimiter(cache cache.Cache, limit int, window time.Duration) *RateLimiter {
-	return &RateLimiter{
-		cache:   cache,
-		limit:   limit,
-		window:  window,
-		context: context.Background(),
-	}
-}
-
-func init() {
-	limiter = rate.NewLimiter(rate.Every(time.Second/10), 5)
-}
 
 const (
 	rateLimitMaxRequests = 5
