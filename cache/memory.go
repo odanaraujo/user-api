@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -83,4 +84,24 @@ func (cache *MemoryCache) Delete(ctx context.Context, key string) {
 
 	delete(cache.Data, key)
 	delete(cache.Expiration, key)
+}
+
+func (m *MemoryCache) Increment(ctx context.Context, key string, expiration time.Duration) (int64, error) {
+	m.Mutex.Lock()
+	defer m.Mutex.Unlock()
+
+	var count int64 = 1
+
+	if val, ok := m.Data[key]; ok {
+		parsed, err := strconv.ParseInt(string(val), 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		count = parsed + 1
+	}
+
+	m.Data[key] = []byte(strconv.FormatInt(count, 10))
+	m.Expiration[key] = time.Now().Add(expiration)
+
+	return count, nil
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/odanaraujo/user-api/cache"
 	"github.com/odanaraujo/user-api/infrastructure/exception"
 	"github.com/odanaraujo/user-api/usecase/usercase/createcases"
+	"github.com/odanaraujo/user-api/usecase/usercase/deletecases"
 	"github.com/odanaraujo/user-api/usecase/usercase/getcases"
 	"github.com/odanaraujo/user-api/usecase/usercase/updatecases"
 
@@ -23,7 +24,7 @@ type UserService struct {
 	getcases       *getcases.GetUserUseCase
 	createUserCase *createcases.CreateUserUseCase
 	updateUserCase *updatecases.UpdateUserUseCase
-	deleteUserCase *createcases.DeleteUserUseCase
+	deleteUserCase *deletecases.DeleteUserUseCase
 }
 
 func NewUserService(cache cache.Cache) *UserService {
@@ -31,7 +32,7 @@ func NewUserService(cache cache.Cache) *UserService {
 		getcases:       getcases.NewGetUserCase(cache),
 		createUserCase: createcases.NewCreateUser(cache),
 		updateUserCase: updatecases.NewUpdateUser(cache),
-		deleteUserCase: createcases.NewDeleteUser(cache),
+		deleteUserCase: deletecases.NewDeleteUser(cache),
 	}
 }
 

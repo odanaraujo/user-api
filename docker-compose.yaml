@@ -1,0 +1,48 @@
+services:
+
+  app:
+    build: .
+    container_name: user_api
+    ports:
+      - 8080:8080
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - mongodb
+    networks:
+      - default
+
+  redis:
+    image: redis:7.2
+    container_name: redis_user_api
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    
+  mongodb:
+    image: mongo:7.0
+    container_name: mongo_user_api
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo_data:/data/db
+    
+  mongo-express:
+    image: mongo-express:1.0.0-alpha.4
+    container_name: mongo_express_user_api
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongodb:27017/
+    
+volumes:
+  redis_data:
+  mongo_data:

@@ -3,6 +3,7 @@ package getcases
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/odanaraujo/user-api/cache"
 	"github.com/odanaraujo/user-api/infrastructure/exception"
@@ -22,6 +23,7 @@ func NewGetUserCase(cache cache.Cache) *GetUserUseCase {
 }
 
 func (g *GetUserUseCase) Execute(ctx context.Context, ID string) (*model.User, *exception.Exception) {
+	fmt.Printf("init get [DAN]: %s", ID)
 	if ID == "" {
 		return nil, exception.BadRequestException("user ID is required")
 	}

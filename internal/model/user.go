@@ -11,11 +11,11 @@ const (
 )
 
 type User struct {
-	ID    string
-	Name  string
-	CPF   string
-	Age   uint64
-	Email string
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	CPF   string `json:"cpf"`
+	Age   uint64 `json:"age"`
+	Email string `json:"email"`
 }
 
 func (u *User) Validate() error {

@@ -1,38 +1,41 @@
 package middleware
 
 import (
-	"sync"
+	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/odanaraujo/user-api/cache"
 	"github.com/odanaraujo/user-api/infrastructure/exception"
 	"github.com/odanaraujo/user-api/infrastructure/loggers"
-	"golang.org/x/time/rate"
+	"go.uber.org/zap"
 )
 
-var (
-	limiter *rate.Limiter
-	mu      sync.Mutex
+const (
+	rateLimitMaxRequests = 5
+	rateLimitWindow      = time.Minute * 1
 )
 
-func init() {
-	limiter = rate.NewLimiter(rate.Every(time.Second/10), 5)
-}
-
-func RateLimitMiddleware() gin.HandlerFunc {
+func RateLimitByIP(cache cache.Cache) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		mu.Lock()
-		defer mu.Unlock()
+		ctx := c.Request.Context()
+		ip := c.ClientIP()
+		key := fmt.Sprintf("rate_limit:%s", ip)
 
-		// check if the requested quantity is within the limit
-		if !limiter.Allow() {
-			err := exception.TooManyRequestsException("Too many requests, please try again later.")
-			log := loggers.FromContext(c.Request.Context())
-			log.Error(err.Message)
-			c.JSON(err.Code, err)
-			c.Abort()
+		count, err := cache.Increment(ctx, key, rateLimitWindow)
+		if err != nil {
+			loggers.FromContext(ctx).Error("error incrementing rate limit", zap.Error(err))
+			c.AbortWithStatusJSON(http.StatusInternalServerError, exception.InternalServerException("internal error"))
 			return
 		}
+
+		if count > int64(rateLimitMaxRequests) {
+			loggers.FromContext(ctx).Warn("rate limit exceeded", zap.String("ip", ip))
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, exception.TooManyRequestsException("Too many requests, try again later"))
+			return
+		}
+
 		c.Next()
 	}
 }
