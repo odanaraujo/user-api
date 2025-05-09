@@ -77,5 +77,7 @@ func GetLogger() *zap.Logger {
 }
 
 func Close() {
-	log.Sync()
+	if log != nil {
+		_ = log.Sync()
+	}
 }

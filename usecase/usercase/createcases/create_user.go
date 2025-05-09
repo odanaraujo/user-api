@@ -8,9 +8,15 @@ import (
 	"github.com/odanaraujo/user-api/cache"
 	"github.com/odanaraujo/user-api/infrastructure/exception"
 	"github.com/odanaraujo/user-api/infrastructure/loggers"
+	"github.com/odanaraujo/user-api/internal/auth"
 	"github.com/odanaraujo/user-api/internal/model"
 	"go.uber.org/zap"
 )
+
+type CreateUserResponse struct {
+	User  *model.User `json:"user"`
+	Token string      `json:"token"`
+}
 
 type CreateUserUseCase struct {
 	Cache cache.Cache
@@ -20,7 +26,7 @@ func NewCreateUser(cache cache.Cache) *CreateUserUseCase {
 	return &CreateUserUseCase{Cache: cache}
 }
 
-func (c *CreateUserUseCase) Execute(ctx context.Context, user *model.User) (*model.User, *exception.Exception) {
+func (c *CreateUserUseCase) Execute(ctx context.Context, user *model.User) (*CreateUserResponse, *exception.Exception) {
 	user.ID = uuid.NewString()
 
 	if err := user.Validate(); err != nil {
@@ -38,5 +44,15 @@ func (c *CreateUserUseCase) Execute(ctx context.Context, user *model.User) (*mod
 
 	c.Cache.Set(ctx, user.ID, data, model.CacheTTL)
 
-	return user, nil
+	token, err := auth.GenerateToken(user.ID)
+	if err != nil {
+		log := loggers.FromContext(ctx)
+		log.Error("could not generate token", zap.String("user_id", user.ID))
+		return nil, exception.InternalServerException("could not generate token")
+	}
+
+	return &CreateUserResponse{
+		User:  user,
+		Token: token,
+	}, nil
 }

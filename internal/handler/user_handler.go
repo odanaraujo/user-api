@@ -39,21 +39,33 @@ func (u *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	createUser, err := u.Service.CreateUser(ctx, &user)
+	response, err := u.Service.CreateUser(ctx, &user)
 	if err != nil {
 		c.JSON(err.Code, err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, createUser)
+	c.JSON(http.StatusCreated, response)
 }
 
 func (u *UserHandler) UpdateUser(c *gin.Context) {
 	ctx := c.Request.Context()
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, exception.UnauthorizedRequestException("unauthorized"))
+		return
+	}
+
 	var user model.User
 	if err := c.ShouldBindBodyWithJSON(&user); err != nil {
 		ex := exception.BadRequestException("invalid request payload")
 		c.JSON(ex.Code, ex)
+		return
+	}
+
+	// Ensure user can only update their own data
+	if user.ID != userID.(string) {
+		c.JSON(http.StatusForbidden, exception.ForbiddenException("you can only update your own data"))
 		return
 	}
 
@@ -67,7 +79,19 @@ func (u *UserHandler) UpdateUser(c *gin.Context) {
 
 func (u *UserHandler) DeleteUser(c *gin.Context) {
 	ctx := c.Request.Context()
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, exception.UnauthorizedRequestException("unauthorized"))
+		return
+	}
+
 	id := c.Param("id")
+	// Ensure user can only delete their own data
+	if id != userID.(string) {
+		c.JSON(http.StatusForbidden, exception.ForbiddenException("you can only delete your own data"))
+		return
+	}
+
 	if err := u.Service.DeleteUser(ctx, id); err != nil {
 		c.JSON(err.Code, err)
 		return

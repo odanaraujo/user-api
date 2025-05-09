@@ -15,7 +15,7 @@ import (
 
 type Service interface {
 	GetUserByID(ctx context.Context, id string) (*model.User, *exception.Exception)
-	CreateUser(ctx context.Context, user *model.User) (*model.User, *exception.Exception)
+	CreateUser(ctx context.Context, user *model.User) (*createcases.CreateUserResponse, *exception.Exception)
 	UpdateUser(ctx context.Context, user *model.User) *exception.Exception
 	DeleteUser(ctx context.Context, id string) *exception.Exception
 }
@@ -40,7 +40,7 @@ func (u *UserService) GetUserByID(ctx context.Context, ID string) (*model.User, 
 	return u.getcases.Execute(ctx, ID)
 }
 
-func (u *UserService) CreateUser(ctx context.Context, user *model.User) (*model.User, *exception.Exception) {
+func (u *UserService) CreateUser(ctx context.Context, user *model.User) (*createcases.CreateUserResponse, *exception.Exception) {
 	return u.createUserCase.Execute(ctx, user)
 }
 
