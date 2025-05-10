@@ -22,7 +22,7 @@ func NewGetUserCase(cache cache.Cache) *GetUserUseCase {
 	}
 }
 
-func (g *GetUserUseCase) Execute(ctx context.Context, ID string) (*model.User, *exception.Exception) {
+func (g *GetUserUseCase) Execute(ctx context.Context, ID string) (*model.UserResponse, *exception.Exception) {
 	fmt.Printf("init get [DAN]: %s", ID)
 	if ID == "" {
 		return nil, exception.BadRequestException("user ID is required")
@@ -42,5 +42,5 @@ func (g *GetUserUseCase) Execute(ctx context.Context, ID string) (*model.User, *
 		return nil, exception.InternalServerException("error performing unmarshal")
 	}
 
-	return &user, nil
+	return model.NewUserResponse(&user), nil
 }

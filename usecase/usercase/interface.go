@@ -8,7 +8,7 @@ import (
 )
 
 type UseCase interface {
-	GetUserByID(ctx context.Context, id string) (*model.User, *exception.Exception)
+	GetUserByID(ctx context.Context, id string) (*model.UserResponse, *exception.Exception)
 	CreateUser(ctx context.Context, user *model.User) (*model.User, *exception.Exception)
 	UpdateUser(ctx context.Context, user *model.User) *exception.Exception
 	DeleteUser(ctx context.Context, id string) *exception.Exception

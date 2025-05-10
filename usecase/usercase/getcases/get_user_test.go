@@ -30,6 +30,8 @@ func TestGetUserByID(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, user.Name, got.Name)
 	assert.Equal(t, user.Email, got.Email)
+	assert.Equal(t, user.Age, got.Age)
+	assert.Equal(t, user.ID, got.ID)
 }
 
 func TestGetUserByID_NotFound(t *testing.T) {

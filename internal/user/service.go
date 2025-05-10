@@ -37,11 +37,7 @@ func NewUserService(cache cache.Cache, authService auth.Service) *UserService {
 }
 
 func (u *UserService) GetUserByID(ctx context.Context, ID string) (*model.UserResponse, *exception.Exception) {
-	user, err := u.getcases.Execute(ctx, ID)
-	if err != nil {
-		return nil, err
-	}
-	return model.NewUserResponse(user), nil
+	return u.getcases.Execute(ctx, ID)
 }
 
 func (u *UserService) CreateUser(ctx context.Context, user *model.User) (*model.CreateUserResponse, *exception.Exception) {
