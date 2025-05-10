@@ -6,13 +6,30 @@ import (
 	"testing"
 
 	"github.com/odanaraujo/user-api/cache"
+	"github.com/odanaraujo/user-api/infrastructure/exception"
+	"github.com/odanaraujo/user-api/internal/auth"
 	"github.com/odanaraujo/user-api/internal/model"
 	"github.com/stretchr/testify/assert"
 )
 
+type mockAuthService struct{}
+
+func (m *mockAuthService) GenerateToken(ctx context.Context, userID string) (string, *exception.Exception) {
+	return "mock-token", nil
+}
+
+func (m *mockAuthService) ValidateToken(ctx context.Context, token string) (*auth.Claims, *exception.Exception) {
+	return &auth.Claims{UserID: "mock-user-id"}, nil
+}
+
+func (m *mockAuthService) InvalidateToken(ctx context.Context, token string) *exception.Exception {
+	return nil
+}
+
 func TestCreateUser(t *testing.T) {
 	mock := cache.NewMockCache()
-	service := NewCreateUser(mock)
+	mockAuth := &mockAuthService{}
+	service := NewCreateUser(mock, mockAuth)
 
 	user := &model.User{
 		Name:  "João",
@@ -23,11 +40,10 @@ func TestCreateUser(t *testing.T) {
 
 	response, err := service.Execute(context.Background(), user)
 	assert.Nil(t, err)
-	assert.NotEmpty(t, response.Token)
+	assert.Equal(t, "mock-token", response.Token)
 	assert.Equal(t, user.Name, response.User.Name)
 	assert.Equal(t, user.Email, response.User.Email)
 
-	// verifica se o dado foi realmente salvo no cache
 	data, ok := mock.Get(context.Background(), response.User.ID)
 	assert.True(t, ok)
 
@@ -40,7 +56,8 @@ func TestCreateUser(t *testing.T) {
 
 func TestCreateUser_OverWrite(t *testing.T) {
 	mock := cache.NewMockCache()
-	service := NewCreateUser(mock)
+	mockAuth := &mockAuthService{}
+	service := NewCreateUser(mock, mockAuth)
 
 	user1 := &model.User{Name: "first", CPF: "12345678910", Age: 30, Email: "1@a.com"}
 	user2 := &model.User{Name: "seconds", CPF: "12345678911", Age: 25, Email: "2@a.com"}
@@ -57,7 +74,8 @@ func TestCreateUser_OverWrite(t *testing.T) {
 
 func TestCreateUserWithEmailError(t *testing.T) {
 	mock := cache.NewMockCache()
-	service := NewCreateUser(mock)
+	mockAuth := &mockAuthService{}
+	service := NewCreateUser(mock, mockAuth)
 
 	user := &model.User{
 		Name:  "João",

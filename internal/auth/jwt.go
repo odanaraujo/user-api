@@ -58,5 +58,5 @@ func getJWTSecret() string {
 	if secret := os.Getenv("JWT_SECRET"); secret != "" {
 		return secret
 	}
-	return "your-256-bit-secret" // Default secret for development
+	return "your-256-bit-secret"
 }

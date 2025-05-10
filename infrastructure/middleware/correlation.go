@@ -18,7 +18,6 @@ func CorrelationIDMiddleware() gin.HandlerFunc {
 
 		c.Set("correlation_id", cid)
 
-		// Use GetLogger para acessar o logger base
 		baseLogger := loggers.GetLogger()
 		requestLogger := baseLogger.With(zap.String("correlation_id", cid))
 

@@ -13,20 +13,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type CreateUserResponse struct {
-	User  *model.User `json:"user"`
-	Token string      `json:"token"`
-}
-
 type CreateUserUseCase struct {
 	Cache cache.Cache
+	Auth  auth.Service
 }
 
-func NewCreateUser(cache cache.Cache) *CreateUserUseCase {
-	return &CreateUserUseCase{Cache: cache}
+func NewCreateUser(cache cache.Cache, authService auth.Service) *CreateUserUseCase {
+	return &CreateUserUseCase{
+		Cache: cache,
+		Auth:  authService,
+	}
 }
 
-func (c *CreateUserUseCase) Execute(ctx context.Context, user *model.User) (*CreateUserResponse, *exception.Exception) {
+func (c *CreateUserUseCase) Execute(ctx context.Context, user *model.User) (*model.CreateUserResponse, *exception.Exception) {
 	user.ID = uuid.NewString()
 
 	if err := user.Validate(); err != nil {
@@ -44,15 +43,13 @@ func (c *CreateUserUseCase) Execute(ctx context.Context, user *model.User) (*Cre
 
 	c.Cache.Set(ctx, user.ID, data, model.CacheTTL)
 
-	token, err := auth.GenerateToken(user.ID)
-	if err != nil {
-		log := loggers.FromContext(ctx)
-		log.Error("could not generate token", zap.String("user_id", user.ID))
-		return nil, exception.InternalServerException("could not generate token")
+	token, ex := c.Auth.GenerateToken(ctx, user.ID)
+	if ex != nil {
+		return nil, ex
 	}
 
-	return &CreateUserResponse{
-		User:  user,
+	return &model.CreateUserResponse{
+		User:  model.NewUserResponse(user),
 		Token: token,
 	}, nil
 }

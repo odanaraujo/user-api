@@ -5,17 +5,17 @@ import (
 
 	"github.com/odanaraujo/user-api/cache"
 	"github.com/odanaraujo/user-api/infrastructure/exception"
+	"github.com/odanaraujo/user-api/internal/auth"
+	"github.com/odanaraujo/user-api/internal/model"
 	"github.com/odanaraujo/user-api/usecase/usercase/createcases"
 	"github.com/odanaraujo/user-api/usecase/usercase/deletecases"
 	"github.com/odanaraujo/user-api/usecase/usercase/getcases"
 	"github.com/odanaraujo/user-api/usecase/usercase/updatecases"
-
-	"github.com/odanaraujo/user-api/internal/model"
 )
 
 type Service interface {
-	GetUserByID(ctx context.Context, id string) (*model.User, *exception.Exception)
-	CreateUser(ctx context.Context, user *model.User) (*createcases.CreateUserResponse, *exception.Exception)
+	GetUserByID(ctx context.Context, id string) (*model.UserResponse, *exception.Exception)
+	CreateUser(ctx context.Context, user *model.User) (*model.CreateUserResponse, *exception.Exception)
 	UpdateUser(ctx context.Context, user *model.User) *exception.Exception
 	DeleteUser(ctx context.Context, id string) *exception.Exception
 }
@@ -27,20 +27,24 @@ type UserService struct {
 	deleteUserCase *deletecases.DeleteUserUseCase
 }
 
-func NewUserService(cache cache.Cache) *UserService {
+func NewUserService(cache cache.Cache, authService auth.Service) *UserService {
 	return &UserService{
 		getcases:       getcases.NewGetUserCase(cache),
-		createUserCase: createcases.NewCreateUser(cache),
+		createUserCase: createcases.NewCreateUser(cache, authService),
 		updateUserCase: updatecases.NewUpdateUser(cache),
 		deleteUserCase: deletecases.NewDeleteUser(cache),
 	}
 }
 
-func (u *UserService) GetUserByID(ctx context.Context, ID string) (*model.User, *exception.Exception) {
-	return u.getcases.Execute(ctx, ID)
+func (u *UserService) GetUserByID(ctx context.Context, ID string) (*model.UserResponse, *exception.Exception) {
+	user, err := u.getcases.Execute(ctx, ID)
+	if err != nil {
+		return nil, err
+	}
+	return model.NewUserResponse(user), nil
 }
 
-func (u *UserService) CreateUser(ctx context.Context, user *model.User) (*createcases.CreateUserResponse, *exception.Exception) {
+func (u *UserService) CreateUser(ctx context.Context, user *model.User) (*model.CreateUserResponse, *exception.Exception) {
 	return u.createUserCase.Execute(ctx, user)
 }
 

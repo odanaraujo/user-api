@@ -8,7 +8,7 @@ import (
 	"github.com/odanaraujo/user-api/internal/auth"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func AuthMiddleware(authService auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -22,13 +22,9 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		claims, err := auth.ValidateToken(parts[1])
+		claims, err := authService.ValidateToken(c.Request.Context(), parts[1])
 		if err != nil {
-			if err == auth.ErrExpiredToken {
-				c.AbortWithStatusJSON(401, exception.UnauthorizedRequestException("token has expired"))
-				return
-			}
-			c.AbortWithStatusJSON(401, exception.UnauthorizedRequestException("invalid token"))
+			c.AbortWithStatusJSON(err.Code, err)
 			return
 		}
 
