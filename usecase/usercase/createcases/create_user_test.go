@@ -6,59 +6,78 @@ import (
 	"testing"
 
 	"github.com/odanaraujo/user-api/cache"
+	"github.com/odanaraujo/user-api/infrastructure/exception"
+	"github.com/odanaraujo/user-api/internal/auth"
 	"github.com/odanaraujo/user-api/internal/model"
 	"github.com/stretchr/testify/assert"
 )
 
+type mockAuthService struct{}
+
+func (m *mockAuthService) GenerateToken(ctx context.Context, userID string) (string, *exception.Exception) {
+	return "mock-token", nil
+}
+
+func (m *mockAuthService) ValidateToken(ctx context.Context, token string) (*auth.Claims, *exception.Exception) {
+	return &auth.Claims{UserID: "mock-user-id"}, nil
+}
+
+func (m *mockAuthService) InvalidateToken(ctx context.Context, token string) *exception.Exception {
+	return nil
+}
+
 func TestCreateUser(t *testing.T) {
 	mock := cache.NewMockCache()
-	service := NewCreateUser(mock)
+	mockAuth := &mockAuthService{}
+	service := NewCreateUser(mock, mockAuth)
 
 	user := &model.User{
-		ID:    "123",
 		Name:  "João",
 		CPF:   "12345678900",
 		Age:   30,
 		Email: "joao@gmail.com",
 	}
 
-	createdUser, err := service.Execute(context.Background(), user)
+	response, err := service.Execute(context.Background(), user)
 	assert.Nil(t, err)
-	assert.Equal(t, user, createdUser)
+	assert.Equal(t, "mock-token", response.Token)
+	assert.Equal(t, user.Name, response.User.Name)
+	assert.Equal(t, user.Email, response.User.Email)
 
-	// verifica se o dado foi realmente salvo no cache
-	data, ok := mock.Get(context.Background(), createdUser.ID)
+	data, ok := mock.Get(context.Background(), response.User.ID)
 	assert.True(t, ok)
 
 	var cached model.User
-	_ = json.Unmarshal(data, &cached)
-	assert.Equal(t, user.ID, cached.ID)
-	assert.Equal(t, user.Email, cached.Email)
+	unmarshalErr := json.Unmarshal(data, &cached)
+	assert.NoError(t, unmarshalErr)
+	assert.Equal(t, response.User.ID, cached.ID)
+	assert.Equal(t, response.User.Email, cached.Email)
 }
 
 func TestCreateUser_OverWrite(t *testing.T) {
 	mock := cache.NewMockCache()
-	service := NewCreateUser(mock)
+	mockAuth := &mockAuthService{}
+	service := NewCreateUser(mock, mockAuth)
 
-	user1 := &model.User{ID: "1", Name: "first", CPF: "12345678910", Age: 30, Email: "1@a.com"}
-	user2 := &model.User{ID: "1", Name: "seconds", CPF: "12345678911", Age: 25, Email: "2@a.com"}
+	user1 := &model.User{Name: "first", CPF: "12345678910", Age: 30, Email: "1@a.com"}
+	user2 := &model.User{Name: "seconds", CPF: "12345678911", Age: 25, Email: "2@a.com"}
 
-	service.Execute(context.Background(), user1)
-	service.Execute(context.Background(), user2)
+	_, _ = service.Execute(context.Background(), user1)
+	response2, _ := service.Execute(context.Background(), user2)
 
-	data, _ := mock.Get(context.Background(), user2.ID)
+	data, _ := mock.Get(context.Background(), response2.User.ID)
 	var cached model.User
-	json.Unmarshal(data, &cached)
-
+	unmarshalErr := json.Unmarshal(data, &cached)
+	assert.NoError(t, unmarshalErr)
 	assert.Equal(t, "seconds", cached.Name)
 }
 
 func TestCreateUserWithEmailError(t *testing.T) {
 	mock := cache.NewMockCache()
-	service := NewCreateUser(mock)
+	mockAuth := &mockAuthService{}
+	service := NewCreateUser(mock, mockAuth)
 
 	user := &model.User{
-		ID:    "123",
 		Name:  "João",
 		CPF:   "12345678900",
 		Age:   30,

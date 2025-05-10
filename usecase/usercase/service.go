@@ -1,13 +1,7 @@
 package usercase
 
 import (
-	"time"
-
 	"github.com/odanaraujo/user-api/cache"
-)
-
-const (
-	cacheTTL = time.Hour * 24
 )
 
 type ServiceImpl struct {

@@ -8,19 +8,24 @@ import (
 	"github.com/odanaraujo/user-api/cache"
 	"github.com/odanaraujo/user-api/infrastructure/exception"
 	"github.com/odanaraujo/user-api/infrastructure/loggers"
+	"github.com/odanaraujo/user-api/internal/auth"
 	"github.com/odanaraujo/user-api/internal/model"
 	"go.uber.org/zap"
 )
 
 type CreateUserUseCase struct {
 	Cache cache.Cache
+	Auth  auth.Service
 }
 
-func NewCreateUser(cache cache.Cache) *CreateUserUseCase {
-	return &CreateUserUseCase{Cache: cache}
+func NewCreateUser(cache cache.Cache, authService auth.Service) *CreateUserUseCase {
+	return &CreateUserUseCase{
+		Cache: cache,
+		Auth:  authService,
+	}
 }
 
-func (c *CreateUserUseCase) Execute(ctx context.Context, user *model.User) (*model.User, *exception.Exception) {
+func (c *CreateUserUseCase) Execute(ctx context.Context, user *model.User) (*model.CreateUserResponse, *exception.Exception) {
 	user.ID = uuid.NewString()
 
 	if err := user.Validate(); err != nil {
@@ -38,5 +43,13 @@ func (c *CreateUserUseCase) Execute(ctx context.Context, user *model.User) (*mod
 
 	c.Cache.Set(ctx, user.ID, data, model.CacheTTL)
 
-	return user, nil
+	token, ex := c.Auth.GenerateToken(ctx, user.ID)
+	if ex != nil {
+		return nil, ex
+	}
+
+	return &model.CreateUserResponse{
+		User:  model.NewUserResponse(user),
+		Token: token,
+	}, nil
 }

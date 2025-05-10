@@ -13,9 +13,10 @@ func main() {
 
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env found, using environment variables")
-
 	}
 
 	r := router.NewRouter()
-	r.Run(":8080")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatal("Failed to start server:", err)
+	}
 }
